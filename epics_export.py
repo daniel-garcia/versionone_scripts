@@ -48,6 +48,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='export versionone stories.')
     parser.add_argument('--token', default=os.environ.get('VERSION_ONE_TOKEN'))
     parser.add_argument('--endpoint', default=os.environ.get('VERSION_ONE_ENDPOINT'))
+    parser.add_argument("--scope", default="Atlas 2.6")
     parser.add_argument("tsa_status", default="")
     args = parser.parse_args()
     headers = {}
@@ -56,6 +57,6 @@ if __name__ == '__main__':
         headers['Content-Type'] = 'application/json'
         headers['Authorization'] = 'Bearer ' + args.token
 
-    query("Atlas 2.6", args.tsa_status)
+    query(args.scope, args.tsa_status)
 
 
