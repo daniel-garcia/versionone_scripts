@@ -7,13 +7,14 @@ import requests
 from dateutil.parser import parse as dateparse
 
 
-def query(scope, filter):
+def query(scope, filter, debug=False):
     q = """
 {
   "from": "Epic",
   "select": [
     "ID.Name",
     "Name",
+    "Category.Name",
     "Number",
     "Custom_TSAStatus2.Name",
     "Custom_TSADate"
@@ -23,7 +24,8 @@ def query(scope, filter):
   ],
   "where": {
     "Scope.Name": "%s",
-    "Custom_TSAStatus2.Name": "%s"
+    "Custom_TSAStatus2.Name": "%s",
+    "Category.Name": "Big Story"
   }
 }
 """ % (scope, filter)
@@ -33,6 +35,8 @@ def query(scope, filter):
     i = 0
     for i in range(len(stories)):
         s = stories[i]
+        if debug:
+            print s
         if filter == "Required":
             ds = s['Custom_TSADate']
             if ds:
@@ -49,6 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('--token', default=os.environ.get('VERSION_ONE_TOKEN'))
     parser.add_argument('--endpoint', default=os.environ.get('VERSION_ONE_ENDPOINT'))
     parser.add_argument("--scope", default="Atlas 2.6")
+    parser.add_argument("--debug", action="store_true")
     parser.add_argument("tsa_status", default="")
     args = parser.parse_args()
     headers = {}
@@ -57,6 +62,6 @@ if __name__ == '__main__':
         headers['Content-Type'] = 'application/json'
         headers['Authorization'] = 'Bearer ' + args.token
 
-    query(args.scope, args.tsa_status)
+    query(args.scope, args.tsa_status, args.debug)
 
 
