@@ -7,6 +7,23 @@ import requests
 from dateutil.parser import parse as dateparse
 
 
+
+def printCount(filter, count) :
+	if filter == "DA Review Required":
+		print("Big Stories requiring DA Review (%d)" % count)
+	elif filter == "Done":
+		print("Big Stories that have architecture completed (%d)" % count)
+	elif filter == "":
+		print("New Big Stories not yet reviewed (%d)" % count)
+	elif filter == "Required":
+		print("Big Stories requiring architecture (%d)" % count)
+	elif filter == "Not Required":
+		print("Big Stories that likely do not have architecture requirements (%d)" % count)
+	elif filter == "Re-review":
+    		print("Big Stories that are rejected will be re-reviewed (%d)" % count)
+	else:
+		print("Number of stories = %d" % count)
+
 def query(scope, filter, debug=False):
     q = """
 {
@@ -28,11 +45,13 @@ def query(scope, filter, debug=False):
     "Category.Name": "Big Story"
   }
 }
+
 """ % (scope, filter)
     url = args.endpoint + '/query.v1'
     req = requests.post(url, data=q, headers=headers)
     stories = req.json()[0]
     i = 0
+    printCount(filter, len(stories))
     for i in range(len(stories)):
         s = stories[i]
         if debug:
