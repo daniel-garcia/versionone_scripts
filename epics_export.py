@@ -52,7 +52,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='export versionone stories.')
     parser.add_argument('--token', default=os.environ.get('VERSION_ONE_TOKEN'))
     parser.add_argument('--endpoint', default=os.environ.get('VERSION_ONE_ENDPOINT'))
-    parser.add_argument("--scope", default="Atlas 2.6")
+    parser.add_argument("--scope", default="Athena 2.7")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("tsa_status", default="")
     args = parser.parse_args()
