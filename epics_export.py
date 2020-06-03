@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import json
@@ -55,7 +55,7 @@ def query(scope, filter, debug=False):
     for i in range(len(stories)):
         s = stories[i]
         if debug:
-            print s
+            print(s)
         if filter == "Required":
             ds = s['Custom_TSADate']
             if ds:
@@ -63,15 +63,15 @@ def query(scope, filter, debug=False):
                 ds = ds.strftime('%m/%d/%Y')
             else:
                 ds = "TBD"
-            print ("%s, %s - Target %s" % (s['Number'],s['Name'], ds))
+            print("%s, %s - Target %s" % (s['Number'],s['Name'], ds))
         else:
-            print ("%s, %s" % (s['Number'],s['Name']))
+            print("%s, %s" % (s['Number'],s['Name']))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='export versionone stories.')
     parser.add_argument('--token', default=os.environ.get('VERSION_ONE_TOKEN'))
     parser.add_argument('--endpoint', default=os.environ.get('VERSION_ONE_ENDPOINT'))
-    parser.add_argument("--scope", default="Athena 2.7")
+    parser.add_argument("--scope", default="Salus 2.4")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("tsa_status", default="")
     args = parser.parse_args()
