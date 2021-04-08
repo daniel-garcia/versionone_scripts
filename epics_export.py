@@ -79,6 +79,12 @@ def dump(stories, debug=False, prefix=''):
         s = stories[i]
         if debug:
             print (s)
+
+        l = prefix
+        if l:
+          l = l + ' '
+        l = "%s [%s]" % (s['Name'], s['Number'])
+
         if s.get('Custom_TSAStatus2.Name', None) in PR_SET_DATE:
             ds = s['Custom_TSADate']
             if ds:
@@ -86,9 +92,9 @@ def dump(stories, debug=False, prefix=''):
                 ds = ds.strftime('%m/%d/%Y')
             else:
                 ds = "TBD"
-            print ("%s%s, %s - %s" % (prefix, s['Number'],s['Name'], ds))
-        else:
-            print ("%s%s, %s" % (prefix, s['Number'],s['Name']))
+            l = l + (" - %s" % ds)
+
+        print (l)
 
 def dump_pr(args, headers, scopes, debug=False):
     for p in pr_order:
