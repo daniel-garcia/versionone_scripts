@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/local/bin/python3
 
 import os
 import json
@@ -9,22 +9,26 @@ from dateutil.parser import parse as dateparse
 
 
 def printCount(filter, count) :
-	if filter == "DA Review Required":
-		print("Big Stories requiring DA Review (%d)" % count)
+	if filter == "In Progress":
+		print("Architecture in Progress: %d" % count)
+	elif filter == "Ready for Eng Review":
+		print("Ready for engineering review: %d" % count)
+	elif filter == "DA Review Required":
+		print("DA review required: %d" % count)
 	elif filter == "Done":
-		print("Big Stories that have architecture completed (%d)" % count)
+		print("Done: %d" % count)
 	elif filter == "":
-		print("New Big Stories not yet reviewed (%d)" % count)
+		print("Not reviewed: %d" % count)
 	elif filter == "Required":
-		print("Big Stories requiring architecture (%d)" % count)
+		print("Architecture Required: %d" % count)
 	elif filter == "Not Required":
-		print("Big Stories that likely do not have architecture requirements (%d)" % count)
+		print("Architecture not required: %d" % count)
 	elif filter == "Re-review":
-    		print("Big Stories that are rejected will be re-reviewed (%d)" % count)
+    		print("Re-review: %d" % count)
 	else:
 		print("Number of stories = %d" % count)
 
-def query(scope, filter, debug=False):
+def query(scope, filter, debug=True):
     q = """
 {
   "from": "Epic",
@@ -34,7 +38,8 @@ def query(scope, filter, debug=False):
     "Category.Name",
     "Number",
     "Custom_TSAStatus2.Name",
-    "Custom_TSADate"
+    "Custom_TSADate",
+    "Custom_ArchAcceptReject"
   ],
   "sort": [
     "+Order"
@@ -47,6 +52,9 @@ def query(scope, filter, debug=False):
 }
 
 """ % (scope, filter)
+
+    oid_accept = 'Custom_Arch_Accept_Reject:118164'
+    oid_reject = 'Custom_Arch_Accept_Reject:118165'
     url = args.endpoint + '/query.v1'
     req = requests.post(url, data=q, headers=headers)
     stories = req.json()[0]
@@ -63,15 +71,22 @@ def query(scope, filter, debug=False):
                 ds = ds.strftime('%m/%d/%Y')
             else:
                 ds = "TBD"
-            print("%s, %s - Target %s" % (s['Number'],s['Name'], ds))
+            print("%s [%s] - Target %s" % (s['Name'], s['Number'], ds))
         else:
-            print("%s, %s" % (s['Number'],s['Name']))
+            accept_reject = s['Custom_ArchAcceptReject']
+            if accept_reject :
+                if accept_reject['_oid'] == oid_reject :
+                    print("%s [%s] Rejected" % (s['Name'], s['Number']))
+                else:
+                    print("%s [%s]" % (s['Name'], s['Number']))
+            else :
+                print("%s [%s]" % (s['Name'], s['Number']))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='export versionone stories.')
     parser.add_argument('--token', default=os.environ.get('VERSION_ONE_TOKEN'))
     parser.add_argument('--endpoint', default=os.environ.get('VERSION_ONE_ENDPOINT'))
-    parser.add_argument("--scope", default="Salus 2.4")
+    parser.add_argument("--scope", default="Athena 3.X")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("tsa_status", default="")
     args = parser.parse_args()
