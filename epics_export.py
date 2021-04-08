@@ -28,7 +28,7 @@ def printCount(filter, count) :
 	else:
 		print("Number of stories = %d" % count)
 
-def query(scope, filter, debug=True):
+def query(scope, filter, debug=False):
     q = """
 {
   "from": "Epic",
