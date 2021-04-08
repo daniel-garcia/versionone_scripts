@@ -20,6 +20,8 @@ export VERSION_ONE_TOKEN=letmein
 ./epics_export.py "Done"
 ./epics_export.py "Re-review"
 ./epics_export.py "Not Required"
+./epics_export.py "Rejected"
+
 
 ```
 
