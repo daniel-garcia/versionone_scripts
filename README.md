@@ -21,7 +21,6 @@ First define the environment to specify endpoint and token (API key). Either
 ```bash
 export VERSION_ONE_ENDPOINT=https://www10.v1host.com/InfobloxNewV1
 export VERSION_ONE_TOKEN=<v1 token>
-export VERSION_ONE_DEFAULT_SCOPE='Athena 3.X'
 ```
 
 Or
@@ -32,7 +31,7 @@ Or
 
 Then run the script, optionnally specifying:
 
-- a target Portfolio (with __--scope__), otherwise uses VERSION_ONE_DEFAULT_SCOPE if set.
+- one or more target Portfolio(s) (with __--scope__ or __-s__).
 - a filter specific to TSA status(es) (with __--tsa_status__). The option accept a list of comma separated TSA Status values. If not specified, all statuses are returned.
 
 ```bash
@@ -47,6 +46,9 @@ Then run the script, optionnally specifying:
 
 # getting unset TSA Status for a given scope
 ./epics_export.py --scope 'Atlas 3.X' --tsa_status ''
+
+# getting unset TSA Status for multiple scopes
+./epics_export.py -s 'Atlas 3.1' -s 'Atlas 3.2' -s 'Atlas 3.3' --tsa_status ''
 ```
 
 Items are returned sorted by V1 Order by default. This may changed using the __--sort id__  option to return items sorted by their V1 Identifier instead.

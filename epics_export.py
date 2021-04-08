@@ -39,7 +39,7 @@ pr_groupings = {
 pr_order = [PR_NEED_REVIEW, PR_ARCH_REQUIRED, PR_ARCH_COMPLETE, PR_ARCH_NOT_REQUIRED, PR_NO_STATUS ]
 
 
-def query(endpoint, headers, scope, tsa_status=None, sort="order"):
+def query(endpoint, headers, scopes, tsa_status=None, sort="order"):
     q = {
       "from": "Epic",
       "select": [
@@ -53,14 +53,15 @@ def query(endpoint, headers, scope, tsa_status=None, sort="order"):
       ],
       "sort": [ "+" + sorts.get(sort, "Order") ],
       "where": {
-        "Scope.Name": scope,
+        "Scope.Name": "$scopes",
         "Category.Name": "$types"
       },
       "with": {
         "$types": [
           "Big Story",
           "Feature"
-        ]
+        ],
+        "$scopes": scopes
       }
     }
 
@@ -89,23 +90,26 @@ def dump(stories, debug=False, prefix=''):
         else:
             print ("%s%s, %s" % (prefix, s['Number'],s['Name']))
 
-def dump_pr(args, headers, debug=False):
+def dump_pr(args, headers, scopes, debug=False):
     for p in pr_order:
         print ('* ', p)
-        dump(query(args.endpoint, headers, args.scope, pr_groupings[p], args.sort), prefix='')
+        dump(query(args.endpoint, headers, scopes, pr_groupings[p], args.sort), prefix='')
 
 
 def main():
     parser = argparse.ArgumentParser(description='export versionone stories.')
     parser.add_argument('--token', default=os.environ.get('VERSION_ONE_TOKEN'))
     parser.add_argument('--endpoint', default=os.environ.get('VERSION_ONE_ENDPOINT'))
-    parser.add_argument("--scope", default=os.getenv('VERSION_ONE_DEFAULT_SCOPE', 'Atlas'))
-    parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--tsa_status", default=None)
-    parser.add_argument("--sort", default="order")
-    parser.add_argument("--output", default="text")
+    parser.add_argument('-s', '--scope', action='append', nargs='+')
+    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--tsa_status', default=None)
+    parser.add_argument('--sort', default='order')
+    parser.add_argument('--output', default='text')
     args = parser.parse_args()
     headers = {}
+
+    scopes = [x for y in args.scope for x in y]
+    # print(scopes)
 
     if args.token:
         headers['Content-Type'] = 'application/json'
@@ -116,9 +120,9 @@ def main():
         tsa_status = args.tsa_status.split(',')
 
     if args.output == 'text':
-        dump(query(args.endpoint, headers, args.scope, tsa_status, args.sort), args.debug)
+        dump(query(args.endpoint, headers, scopes, tsa_status, args.sort), args.debug)
     elif args.output == 'pr':
-        dump_pr(args, headers, args.debug)
+        dump_pr(args, headers, scopes, args.debug)
 
 
 if __name__ == '__main__':
