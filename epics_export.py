@@ -58,8 +58,7 @@ def query(endpoint, headers, scopes, tsa_status=None, sort="order"):
       },
       "with": {
         "$types": [
-          "Big Story",
-          "Feature"
+          "Big Story"
         ],
         "$scopes": scopes
       }
@@ -98,8 +97,9 @@ def dump(stories, debug=False, prefix=''):
 
 def dump_pr(args, headers, scopes, debug=False):
     for p in pr_order:
-        print ('* ', p)
-        dump(query(args.endpoint, headers, scopes, pr_groupings[p], args.sort), prefix='')
+        stories = query(args.endpoint, headers, scopes, pr_groupings[p], args.sort)
+        print ('* ', p, len(stories))
+        dump(stories, prefix='')
 
 
 def main():
