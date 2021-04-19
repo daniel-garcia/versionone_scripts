@@ -69,7 +69,8 @@ def query(scope, filter, filter_review, debug=False):
 	"Number",
 	"Custom_TSAStatus2.Name",
 	"Custom_TSADate",
-	"Custom_ArchAcceptReject"
+	"Custom_ArchAcceptReject",
+	"AssetState"
   ],
   "sort": [
 	"+Order"
@@ -77,7 +78,8 @@ def query(scope, filter, filter_review, debug=False):
   "where": {
 	"Scope.Name": "%s",
 	"Custom_TSAStatus2.Name": "%s",
-	"Category.Name": "Big Story"
+	"Category.Name": "Big Story",
+	"AssetState": "Active"
   }
 }
 
