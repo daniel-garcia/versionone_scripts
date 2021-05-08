@@ -70,7 +70,6 @@ def query(scope, filter, filter_review, debug=False):
 	"Custom_TSAStatus2.Name",
 	"Custom_TSADate",
 	"Custom_ArchAcceptReject",
-	"AssetState"
   ],
   "sort": [
 	"+Order"
@@ -99,7 +98,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='export versionone stories.')
     parser.add_argument('--token', default=os.environ.get('VERSION_ONE_TOKEN'))
     parser.add_argument('--endpoint', default=os.environ.get('VERSION_ONE_ENDPOINT'))
-    parser.add_argument("--scope", default="Athena 3.X")
+    parser.add_argument("--scope", default="Salus 2.8")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("tsa_status", default="")
     args = parser.parse_args()
