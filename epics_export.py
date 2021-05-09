@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python
 
 import os
 import json
@@ -6,109 +6,151 @@ import argparse
 import requests
 from dateutil.parser import parse as dateparse
 
+sorts = { "order": "Order",
+          "id": "ID" }
 
-def printStories(filter, stories, debug):
-    count = len(stories)
-    if filter == "In Progress":
-        print("Architecture in Progress: %d" % count)
-    elif filter == "Ready for Eng Review":
-        print("Ready for engineering review: %d" % count)
-    elif filter == "DA Review Required":
-        print("DA review required: %d" % count)
-    elif filter == "Done":
-        print("Done: %d" % count)
-    elif filter == "":
-        print("Not reviewed: %d" % count)
-    elif filter == "Required":
-        print("Architecture Required: %d" % count)
-    elif filter == "Not Required":
-        print("Architecture not required: %d" % count)
-    elif filter == "Re-review":
-        print("Re-review: %d" % count)
-    elif filter == "Rejected":
-        print("Rejected: %d" % count)
-    else:
-        print("Number of stories = %d" % count)
+statuses = [
+  '',
+  'Required',
+  'Not Required',
+  'Done',
+  'Re-review',
+  'Ready for Eng Review',
+  'DA Review Required',
+  'In Progress'
+]
 
-    for s in stories:
+PR_SET_DATE = ['Required']
+
+PR_NEED_DA_REVIEW = 'Need DA Review'
+PR_NEED_REVIEW = 'Requested Review'
+PR_ARCH_REQUIRED = 'Architecture Required'
+PR_ARCH_COMPLETE = 'Architecture Complete'
+PR_ARCH_NOT_REQUIRED = 'No Architecure Required'
+PR_NO_STATUS = 'No status'
+PR_REJECTED = "Rejected"
+
+pr_groupings = {
+    PR_NEED_DA_REVIEW: ['DA Review Required'],
+    PR_NEED_REVIEW: ['Re-review'],
+    PR_ARCH_REQUIRED: ['Required', 'In Progress'],
+    PR_ARCH_COMPLETE: ['Done', 'Ready for Eng Review'],
+    PR_ARCH_NOT_REQUIRED: ['Not Required'],
+    PR_NO_STATUS: [''],
+    PR_REJECTED: ['']
+}
+
+pr_order = [PR_NEED_DA_REVIEW, PR_NEED_REVIEW, PR_ARCH_REQUIRED, PR_ARCH_COMPLETE, PR_ARCH_NOT_REQUIRED, PR_REJECTED, PR_NO_STATUS ]
+
+
+def query(endpoint, headers, scopes, tsa_status=None, sort="order"):
+    q = {
+      "from": "Epic",
+      "select": [
+        "ID.Name",
+        "Name",
+        "Category.Name",
+        "Number",
+        "Custom_TSAStatus2.Name",
+        "Custom_TSADate",
+        "Custom_ArchAcceptReject.Name"
+      ],
+      "sort": [ "+" + sorts.get(sort, "Order") ],
+      "where": {
+        "Scope.Name": "$scopes",
+        "Category.Name": "$types",
+        "AssetState": "Active"
+      },
+      "with": {
+        "$types": [
+          "Big Story"
+        ],
+        "$scopes": scopes
+      }
+    }
+
+    if tsa_status is not None:
+        q['where']['Custom_TSAStatus2.Name'] = '$tsa_status'
+        q['with']['$tsa_status'] = tsa_status
+
+    url = endpoint + '/query.v1'
+    req = requests.post(url, data=json.dumps(q), headers=headers)
+    return req.json()[0]
+
+def dump(stories, debug=False, prefix=''):
+    i = 0
+    for i in range(len(stories)):
+        s = stories[i]
         if debug:
-            print(s)
-        if filter == "Required":
+            print (s)
+
+        l = prefix
+        if l:
+          l = l + ' '
+        l = "%s [%s]" % (s['Name'], s['Number'])
+
+        if s.get('Custom_TSAStatus2.Name', None) in PR_SET_DATE:
             ds = s['Custom_TSADate']
             if ds:
                 ds = dateparse(ds)
                 ds = ds.strftime('%m/%d/%Y')
             else:
                 ds = "TBD"
-            print("%s [%s] - Target %s" % (s['Name'], s['Number'], ds))
-        else:
-            print("%s [%s]" % (s['Name'], s['Number']))
+            l = l + (" - %s" % ds)
 
+        print (l)
 
 def filter_stories(filter_rejected, stories):
-    if filter_rejected:
-        oid_filter = 'Custom_Arch_Accept_Reject:118165'
-    else:
-        oid_filter = 'Custom_Arch_Accept_Reject:118164'
     ret_stories = []
     for s in stories :
-        accept_reject = s['Custom_ArchAcceptReject']
-        if accept_reject['_oid'] == oid_filter:
-            ret_stories.append(s)
+        if filter_rejected:
+            if s['Custom_ArchAcceptReject.Name'] == 'Rejected':
+                ret_stories.append(s)
+        else:
+            if s['Custom_ArchAcceptReject.Name'] != 'Rejected':
+                ret_stories.append(s)
     return ret_stories
 
-
-def query(scope, filter, filter_review, debug=False):
-    q = """
-{
-  "from": "Epic",
-  "select": [
-	"ID.Name",
-	"Name",
-	"Category.Name",
-	"Number",
-	"Custom_TSAStatus2.Name",
-	"Custom_TSADate",
-	"Custom_ArchAcceptReject",
-  ],
-  "sort": [
-	"+Order"
-  ],
-  "where": {
-	"Scope.Name": "%s",
-	"Custom_TSAStatus2.Name": "%s",
-	"Category.Name": "Big Story",
-	"AssetState": "Active"
-  }
-}
-
-""" % (scope, filter)
-    url = args.endpoint + '/query.v1'
-    req = requests.post(url, data=q, headers=headers)
-    stories = req.json()[0]
-    if filter_review == "Rejected":
-        printStories('Rejected', filter_stories(True, stories), debug)
-    elif filter_review == "Re-review":
-        printStories('Re-review', filter_stories(False, stories), debug)
-    else:
-        printStories(filter, stories, debug)
+def dump_pr(args, headers, scopes, debug=False):
+    for p in pr_order:
+        stories = query(args.endpoint, headers, scopes, pr_groupings[p], args.sort)
+        if p == PR_NO_STATUS:
+            stories = filter_stories(False, stories)
+        elif p == PR_REJECTED:
+            stories = filter_stories(True, stories)
+        print ('* ', p, len(stories))
+        dump(stories, prefix='')
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='export versionone stories.')
     parser.add_argument('--token', default=os.environ.get('VERSION_ONE_TOKEN'))
     parser.add_argument('--endpoint', default=os.environ.get('VERSION_ONE_ENDPOINT'))
-    parser.add_argument("--scope", default="Salus 2.8")
-    parser.add_argument("--debug", action="store_true")
-    parser.add_argument("tsa_status", default="")
+    parser.add_argument('-s', '--scope', action='append', nargs='+')
+    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--tsa_status', default=None)
+    parser.add_argument('--sort', default='order')
+    parser.add_argument('--output', default='text')
     args = parser.parse_args()
     headers = {}
+
+    scopes = [x for y in args.scope for x in y]
+    # print(scopes)
 
     if args.token:
         headers['Content-Type'] = 'application/json'
         headers['Authorization'] = 'Bearer ' + args.token
 
-    if args.tsa_status == "Re-review" or args.tsa_status == "Rejected":
-        query(args.scope, 'Re-review', args.tsa_status, args.debug)
-    else:
-        query(args.scope, args.tsa_status, None, args.debug)
+    tsa_status = None
+    if args.tsa_status is not None:
+        tsa_status = args.tsa_status.split(',')
+
+    if args.output == 'text':
+        dump(query(args.endpoint, headers, scopes, tsa_status, args.sort), args.debug)
+    elif args.output == 'pr':
+        dump_pr(args, headers, scopes, args.debug)
+
+
+if __name__ == '__main__':
+    main()
+
