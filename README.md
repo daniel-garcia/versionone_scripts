@@ -72,3 +72,8 @@ Output can be changed using the __--output pr__ control option, which will query
 Extending the script capabilities requires to understand the VersionOne schema and the metadata specific to Infoblox. All metadata can be accessed using the following link:
 
 <https://www10.v1host.com/InfobloxNewV1/meta.v1?xsl=api.xsl>
+
+## References
+
+Documentation:
+https://community.versionone.com/Digital.ai_Agility_Integrations/Developer_Library

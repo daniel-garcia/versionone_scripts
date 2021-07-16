@@ -22,21 +22,25 @@ statuses = [
 
 PR_SET_DATE = ['Required']
 
-PR_NEED_REVIEW = 'Need Review'
+PR_NEED_DA_REVIEW = 'Need DA Review'
+PR_NEED_REVIEW = 'Requested Review'
 PR_ARCH_REQUIRED = 'Architecture Required'
 PR_ARCH_COMPLETE = 'Architecture Complete'
 PR_ARCH_NOT_REQUIRED = 'No Architecture Required'
 PR_NO_STATUS = 'No status'
+PR_REJECTED = "Rejected"
 
 pr_groupings = {
-  PR_NEED_REVIEW: ['DA Review Required', 'Re-review'],
-  PR_ARCH_REQUIRED: ['Required', 'In Progress'],
-  PR_ARCH_COMPLETE: ['Done', 'Ready for Eng Review'],
-  PR_ARCH_NOT_REQUIRED: ['Not Required'],
-  PR_NO_STATUS: ['']
+    PR_NEED_DA_REVIEW: ['DA Review Required'],
+    PR_NEED_REVIEW: ['Re-review'],
+    PR_ARCH_REQUIRED: ['Required', 'In Progress'],
+    PR_ARCH_COMPLETE: ['Done', 'Ready for Eng Review'],
+    PR_ARCH_NOT_REQUIRED: ['Not Required'],
+    PR_NO_STATUS: [''],
+    PR_REJECTED: ['']
 }
 
-pr_order = [PR_NEED_REVIEW, PR_ARCH_REQUIRED, PR_ARCH_COMPLETE, PR_ARCH_NOT_REQUIRED, PR_NO_STATUS ]
+pr_order = [PR_NEED_DA_REVIEW, PR_NEED_REVIEW, PR_ARCH_REQUIRED, PR_ARCH_COMPLETE, PR_ARCH_NOT_REQUIRED, PR_REJECTED, PR_NO_STATUS ]
 
 
 def query(endpoint, headers, scopes, tsa_status=None, sort="order"):
@@ -54,7 +58,8 @@ def query(endpoint, headers, scopes, tsa_status=None, sort="order"):
       "sort": [ "+" + sorts.get(sort, "Order") ],
       "where": {
         "Scope.Name": "$scopes",
-        "Category.Name": "$types"
+        "Category.Name": "$types",
+        "AssetState": "Active"
       },
       "with": {
         "$types": [
@@ -95,9 +100,24 @@ def dump(stories, debug=False, prefix=''):
 
         print (l)
 
+def filter_stories(filter_rejected, stories):
+    ret_stories = []
+    for s in stories :
+        if filter_rejected:
+            if s['Custom_ArchAcceptReject.Name'] == 'Rejected':
+                ret_stories.append(s)
+        else:
+            if s['Custom_ArchAcceptReject.Name'] != 'Rejected':
+                ret_stories.append(s)
+    return ret_stories
+
 def dump_pr(args, headers, scopes, debug=False):
     for p in pr_order:
         stories = query(args.endpoint, headers, scopes, pr_groupings[p], args.sort)
+        if p == PR_NO_STATUS:
+            stories = filter_stories(False, stories)
+        elif p == PR_REJECTED:
+            stories = filter_stories(True, stories)
         print ('* ', p, len(stories))
         dump(stories, prefix='')
 
